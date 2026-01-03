@@ -1934,8 +1934,7 @@ body {
 .timeline-duration {
     font-size: 9px;
     color: var(--subtext-color);
-    display: none;
-    /* Hide duration - title is enough */
+    margin-top: 2px;
 }
 
 .timeline-actions {

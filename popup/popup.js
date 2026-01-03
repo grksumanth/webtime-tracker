@@ -299,13 +299,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 target.classList.add('active');
             }
 
-            // Save last active tab
-            await browser.storage.local.set({ lastActiveTab: tabName });
+            // Save last active tab with timestamp
+            await browser.storage.local.set({
+                lastActiveTab: tabName,
+                lastTabTimestamp: Date.now()
+            });
         });
     });
 
-    // Restore last active tab on init
-    const lastTabData = await browser.storage.local.get('lastActiveTab');
+    // Restore last active tab on init (only if within 1 minute)
+    const lastTabData = await browser.storage.local.get(['lastActiveTab', 'lastTabTimestamp']);
 
     // Initialize Notes FIRST (before tab restoration)
     initNotes();
@@ -323,7 +326,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     initPortfolio();
 
     // NOW restore last active tab (after all content is initialized)
-    if (lastTabData.lastActiveTab) {
+    // Only restore if opened within 1 minute (60000ms), otherwise default to tracker
+    const ONE_MINUTE = 60000;
+    const timeSinceLastTab = Date.now() - (lastTabData.lastTabTimestamp || 0);
+
+    if (lastTabData.lastActiveTab && timeSinceLastTab < ONE_MINUTE) {
         switchToTab(lastTabData.lastActiveTab);
 
         // Trigger render for tabs that need it
@@ -332,6 +339,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (lastTabData.lastActiveTab === 'calendar') {
             setTimeout(renderCalendar, 100);
         }
+    } else {
+        // Default to tracker tab if expired or no saved tab
+        switchToTab('tracker');
     }
 
     // Navigation Arrows
