@@ -571,12 +571,11 @@ function renderChart(statsMap) {
 let currentLoadedNoteId = null;
 
 function initNotes() {
-    // Always start with Today's note (reset any previously loaded saved note)
+    // Reset any previously loaded saved note
     currentLoadedNoteId = null;
     showNoteButtons(false);
 
     const editor = document.getElementById('note-editor');
-    const archiveList = document.getElementById('notes-archive-list');
 
     // Tools
     document.querySelectorAll('.tool-btn[data-format]').forEach(btn => {
@@ -596,90 +595,44 @@ function initNotes() {
     const exportBtn = document.getElementById('btn-export-notes');
     if (exportBtn) {
         exportBtn.addEventListener('click', () => {
-            // For export, we might want plain text or HTML. 
-            // Let's export InnerText for readability in .txt, 
-            // or maybe we should switch to .html?
-            // User asked for "notes", usually implies text. 
-            // innerText gives line breaks properly.
             const blob = new Blob([editor.innerText], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `notes-${todayStr}.txt`;
+            a.download = `notes.txt`;
             a.click();
             URL.revokeObjectURL(url);
         });
     }
 
-    // Auto-Save needs to save to selectedDate (but NOT when a saved note is loaded)
+    // Auto-Save to permanent note (unless editing a pinned note)
     let debounceTimer;
     editor.addEventListener('input', () => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-            // Only auto-save to daily note if we're NOT editing a saved note
+            // Only auto-save to permanent note if we're NOT editing a pinned note
             if (!currentLoadedNoteId) {
                 saveNote(editor.innerHTML);
             }
         }, 1000);
     });
 
-    loadNotes(editor, archiveList);
+    loadNotes(editor);
 }
 
 async function loadNotes(editor, archiveList) {
-    const data = await browser.storage.local.get('notes_storage');
-    const notesStorage = data.notes_storage || {};
+    const data = await browser.storage.local.get('permanent_note');
 
-    // Load Today
-    if (notesStorage[todayStr]) {
-        editor.innerHTML = notesStorage[todayStr];
+    // Load permanent note
+    if (data.permanent_note) {
+        editor.innerHTML = data.permanent_note;
     } else {
         editor.innerHTML = '';
-    }
-
-    // Load Archives
-    const dates = Object.keys(notesStorage)
-        .filter(d => d !== todayStr)
-        .sort((a, b) => new Date(b) - new Date(a));
-
-    if (archiveList) {
-        archiveList.innerHTML = '';
-        if (dates.length === 0) {
-            archiveList.innerHTML = '<div style="text-align:center; color:#666; padding:10px;">No other notes.</div>';
-        } else {
-            dates.forEach(date => {
-                const content = notesStorage[date];
-                if (!content.trim()) return;
-                const item = document.createElement('div');
-                item.className = 'archive-item';
-                item.innerHTML = `
-                    <div class="archive-header">
-                        <span>${date}</span>
-                        <button class="icon-btn" style="width:auto; height:auto; padding:0 4px; font-size:10px;" onclick="navigator.clipboard.writeText(this.dataset.copy)">Copy</button>
-                    </div>
-                    <div class="archive-preview">${content.substring(0, 150)}...</div>
-                 `;
-                const btn = item.querySelector('button');
-                btn.dataset.copy = content;
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    navigator.clipboard.writeText(content);
-                    btn.textContent = "Copied!";
-                    setTimeout(() => btn.textContent = "Copy", 2000);
-                });
-                archiveList.appendChild(item);
-            });
-        }
     }
 }
 
 async function saveNote(content) {
-    const data = await browser.storage.local.get('notes_storage');
-    const notesStorage = data.notes_storage || {};
-
-    notesStorage[todayStr] = content;
-
-    await browser.storage.local.set({ notes_storage: notesStorage });
+    await browser.storage.local.set({ permanent_note: content });
 }
 
 // ---------------------------------------------------------
@@ -786,10 +739,10 @@ async function renderSavedNotes() {
     // Clear and rebuild options
     select.innerHTML = '<option value="">📌 Saved Notes</option>';
 
-    // Add "Today" option to go back to daily note
+    // Add "Scratchpad" option to go back to main permanent note
     const todayOption = document.createElement('option');
     todayOption.value = 'today';
-    todayOption.textContent = '📅 Today\'s Note';
+    todayOption.textContent = '📝 Scratchpad';
     select.appendChild(todayOption);
 
     // Add separator if there are saved notes
@@ -860,12 +813,10 @@ function initSavedNotes() {
             }
 
             if (value === 'today') {
-                // Load today's daily note
-                const todayStr = new Date().toLocaleDateString('en-CA');
-                const data = await browser.storage.local.get('notes');
-                const notesStorage = data.notes || {};
+                // Load permanent note (main scratchpad)
+                const data = await browser.storage.local.get('permanent_note');
                 if (editor) {
-                    editor.innerHTML = notesStorage[todayStr] || '';
+                    editor.innerHTML = data.permanent_note || '';
                 }
                 currentLoadedNoteId = null;
                 showNoteButtons(false);
@@ -1492,159 +1443,184 @@ async function renderSchedule() {
     const now = new Date();
     const currentHour = now.getHours() + now.getMinutes() / 60;
 
+    // Vertical Timeline Render
     let html = '';
+
+    // Add "Now" indicator logic
+    let nowIndicatorAdded = false;
+
     activities.forEach(activity => {
+        // Check if we should insert the "Now" indicator before this item
+        // If current hour is before this activity's start hour, and we haven't added it yet
+        if (!nowIndicatorAdded && currentHour < activity.startHour) {
+            // Calculate position relative to the list? 
+            // Actually, "Now" usually sits on the timeline. 
+            // For simplicity in this v1, we'll just insert a marker if it fits between items.
+            // Or better: The indicator is absolute positioned? No, relative to list is hard.
+            // Let's make it a special item.
+            const nowTimeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            html += `
+                <div class="timeline-item now-item" style="padding-top:10px; padding-bottom:18px; align-items:center;">
+                    <div class="timeline-time" style="color:var(--accent-color); font-weight:700;">${nowTimeStr}</div>
+                    <div style="width:12px; height:12px; background:var(--accent-color); border-radius:50%; flex-shrink:0;"></div>
+                </div>
+             `;
+            nowIndicatorAdded = true;
+        }
+
         const startStr = hourToTimeStr(activity.startHour);
         const endStr = hourToTimeStr(activity.endHour);
-        const isScheduled = scheduledActivityIds.includes(activity.id);
+        const duration = activity.endHour - activity.startHour;
+        const durationHrs = Math.floor(duration);
+        const durationMins = Math.round((duration - durationHrs) * 60);
+        let durationStr = '';
+        if (durationHrs > 0) durationStr += `${durationHrs}h `;
+        if (durationMins > 0) durationStr += `${durationMins}m`;
 
-        // Only show timer button for future activities (not passed or in progress)
+        const isScheduled = scheduledActivityIds.includes(activity.id);
         const isFuture = activity.startHour > currentHour;
         const showTimerBtn = isFuture || isScheduled;
 
         const timerIcon = isScheduled ? '✓' : '⏱';
-        const timerStyle = isScheduled ? 'style="color:var(--green);"' : '';
-        const timerTitle = isScheduled ? 'title="Scheduled"' : 'title="Schedule timer for this activity"';
+        const timerStyle = isScheduled ? 'color:var(--green);' : '';
+        const timerTitle = isScheduled ? 'Started/Scheduled' : 'Start Timer';
+
         const timerBtnHtml = showTimerBtn
-            ? `<button class="timer-btn" ${timerTitle} ${timerStyle}>${timerIcon}</button>`
+            ? `<button class="timeline-btn timer-btn" title="${timerTitle}" style="${timerStyle}">${timerIcon}</button>`
             : '';
 
         html += `
-            <div class="schedule-activity-row" data-id="${activity.id}" data-start="${activity.startHour}" data-end="${activity.endHour}">
-                <div class="schedule-activity-time">${startStr} - ${endStr}</div>
-                <div class="schedule-activity-block" style="background:${activity.color};">
-                    <span class="activity-name">${activity.name}</span>
-                    ${timerBtnHtml}
-                    <button class="delete-btn">×</button>
+            <div class="timeline-item" data-id="${activity.id}" data-start="${activity.startHour}" data-end="${activity.endHour}">
+                <div class="timeline-time">${startStr}</div>
+                <div class="timeline-dot" style="border-color:${activity.color}"></div>
+                <div class="timeline-card" style="border-left-color:${activity.color}">
+                    <div class="timeline-header">
+                        <span class="timeline-title">${activity.name}</span>
+                    </div>
+                    <div class="timeline-duration">${startStr} - ${endStr} • ${durationStr}</div>
+                    <div class="timeline-actions">
+                        ${timerBtnHtml}
+                        <button class="timeline-btn edit-btn" title="Edit">✎</button>
+                        <button class="timeline-btn delete-btn" title="Delete">🗑</button>
+                    </div>
                 </div>
             </div>
         `;
     });
+
+    // If now indicator still not added (end of day), add it at bottom?
+    // Maybe not necessary for clean look.
+
     grid.innerHTML = html;
 
-    // Add delete, timer, and double-click edit handlers
-    grid.querySelectorAll('.schedule-activity-row').forEach(row => {
+    // Attach Event Listeners
+    grid.querySelectorAll('.timeline-item').forEach(row => {
+        // Skip special items like "now-item"
+        if (row.classList.contains('now-item')) return;
+
         const id = parseInt(row.dataset.id);
-        const startHour = parseFloat(row.dataset.start);
-        const endHour = parseFloat(row.dataset.end);
-        row.querySelector('.delete-btn').addEventListener('click', async () => {
-            await deleteScheduleActivity(id);
+
+        row.querySelector('.delete-btn').addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (confirm('Delete activity?')) {
+                await deleteScheduleActivity(id);
+            }
         });
 
-        // Timer button - schedule timer to start at activity's start time
         const timerBtn = row.querySelector('.timer-btn');
         if (timerBtn) {
             timerBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-
-                // Calculate duration in minutes for the Tracker timer
-                let durationHours = endHour - startHour;
-                if (durationHours < 0) durationHours += 24; // Handle overnight
-                const durationMinutes = Math.round(durationHours * 60);
-
-                // Calculate delay until start time
-                const now = new Date();
-                const currentHour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
-                let delayHours = startHour - currentHour;
-
-                // Handle overnight (if start time is tomorrow)
-                if (delayHours < 0) delayHours += 24;
-
-                const delayMs = Math.round(delayHours * 3600 * 1000);
-
-                if (delayMs <= 0 || delayHours > 24) {
-                    // Start time already passed or too far away, start now
-                    // Switch to Tracker tab and set the timer
-                    switchToTab('tracker');
-                    const timerInput = document.getElementById('timer-input');
-                    if (timerInput) {
-                        timerInput.value = `${durationMinutes}m`;
-                        // Trigger the timer start
-                        document.querySelector('.action-btn')?.click();
-                    }
-                } else {
-                    // Schedule to start at the activity's start time
-                    const startTime = new Date(now.getTime() + delayMs);
-                    const timeStr = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                    // Add to scheduled timers array (support multiple)
-                    const data = await browser.storage.local.get('scheduled_timers');
-                    const scheduledTimers = data.scheduled_timers || [];
-
-                    // Remove existing schedule for this activity if any
-                    const filtered = scheduledTimers.filter(t => t.activityId !== id);
-
-                    // Add new schedule
-                    filtered.push({
-                        durationMinutes,
-                        startTime: now.getTime() + delayMs,
-                        activityName: row.querySelector('.activity-name')?.textContent || 'Activity',
-                        activityId: id
-                    });
-
-                    await browser.storage.local.set({ scheduled_timers: filtered });
-
-                    // Create alarm with unique name for this activity
-                    browser.alarms.create(`scheduledTimer_${id}`, { when: now.getTime() + delayMs });
-
-                    // Visual feedback - change icon to checkmark (persists)
-                    timerBtn.textContent = '✓';
-                    timerBtn.style.color = 'var(--green)';
-                    timerBtn.title = `Scheduled for ${timeStr}`;
-                }
+                // Reuse existing timer logic... (requires copying that logic or refactoring)
+                // For brevity, calling the same logic structure as before:
+                handleTimerClick(e, id, parseFloat(row.dataset.start), parseFloat(row.dataset.end), row.querySelector('.timeline-title').textContent);
             });
         }
 
-        // Double-click to edit
-        row.addEventListener('dblclick', async () => {
-            const activity = activities.find(a => a.id === id);
-            if (!activity) return;
-
-            const startStr = hourToTimeStr(activity.startHour);
-            const endStr = hourToTimeStr(activity.endHour);
-
-            row.innerHTML = `
-                <div class="schedule-edit-form">
-                    <input type="text" class="edit-name" value="${activity.name}" />
-                    <input type="time" class="edit-start" value="${startStr}" />
-                    <span>to</span>
-                    <input type="time" class="edit-end" value="${endStr}" />
-                    <button class="save-btn">✓</button>
-                    <button class="cancel-btn">✕</button>
-                </div>
-            `;
-
-            const nameInput = row.querySelector('.edit-name');
-            nameInput.focus();
-            nameInput.select();
-
-            row.querySelector('.save-btn').addEventListener('click', async () => {
-                const newName = row.querySelector('.edit-name').value.trim();
-                const newStart = row.querySelector('.edit-start').value;
-                const newEnd = row.querySelector('.edit-end').value;
-
-                if (!newName) return;
-                // Note: We allow end time <= start time for overnight blocks (e.g., 22:00 to 02:00)
-
-                await updateScheduleActivity(id, newName, newStart, newEnd);
-            });
-
-            row.querySelector('.cancel-btn').addEventListener('click', () => {
-                renderSchedule();
-            });
-
-            // Save on Enter key
-            row.querySelectorAll('input').forEach(input => {
-                input.addEventListener('keydown', async (e) => {
-                    if (e.key === 'Enter') {
-                        row.querySelector('.save-btn').click();
-                    } else if (e.key === 'Escape') {
-                        renderSchedule();
-                    }
-                });
-            });
+        row.querySelector('.edit-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Trigger edit mode (reuse double click logic or similar)
+            enterEditMode(row, id, activities.find(a => a.id === id));
         });
     });
+
+}
+
+// Helper for Timer Logic (extracted for cleaner code)
+async function handleTimerClick(e, id, startHour, endHour, name) {
+    let durationHours = endHour - startHour;
+    if (durationHours < 0) durationHours += 24;
+    const durationMinutes = Math.round(durationHours * 60);
+
+    const now = new Date();
+    const currentHour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+    let delayHours = startHour - currentHour;
+    if (delayHours < 0) delayHours += 24;
+    const delayMs = Math.round(delayHours * 3600 * 1000);
+
+    if (delayMs <= 0 || delayHours > 24) {
+        switchToTab('tracker');
+        const timerInput = document.getElementById('timer-input');
+        if (timerInput) {
+            timerInput.value = `${durationMinutes}m`;
+            document.querySelector('.action-btn')?.click();
+        }
+    } else {
+        const data = await browser.storage.local.get('scheduled_timers');
+        const scheduledTimers = data.scheduled_timers || [];
+        const filtered = scheduledTimers.filter(t => t.activityId !== id);
+        filtered.push({
+            durationMinutes,
+            startTime: now.getTime() + delayMs,
+            activityName: name,
+            activityId: id
+        });
+        await browser.storage.local.set({ scheduled_timers: filtered });
+        browser.alarms.create(`scheduledTimer_${id}`, { when: now.getTime() + delayMs });
+
+        // Update UI button immediately
+        e.target.textContent = '✓';
+        e.target.style.color = 'var(--green)';
+    }
+}
+
+function enterEditMode(row, id, activity) {
+    if (!activity) return;
+    const startStr = hourToTimeStr(activity.startHour);
+    const endStr = hourToTimeStr(activity.endHour);
+
+    // Replace card content with edit form
+    const card = row.querySelector('.timeline-card');
+    card.innerHTML = `
+        <div class="schedule-edit-form" style="flex-direction: column; align-items: stretch; gap: 8px;">
+            <input type="text" class="edit-name" value="${activity.name}" style="width: 100%; box-sizing: border-box;">
+            <div style="display:flex; gap:6px; align-items:center;">
+                <input type="time" class="edit-start" value="${startStr}">
+                <span style="font-size:10px; color:var(--subtext-color);">to</span>
+                <input type="time" class="edit-end" value="${endStr}">
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:4px;">
+                <button class="save-btn" style="background:var(--accent-color); color:var(--bg-color); border:none; border-radius:4px; padding:4px 10px; font-size:11px; cursor:pointer;">Save</button>
+                <button class="cancel-btn" style="background:transparent; color:var(--subtext-color); border:1px solid var(--surface1); border-radius:4px; padding:4px 8px; font-size:11px; cursor:pointer;">Cancel</button>
+            </div>
+        </div>
+    `;
+
+    const nameInput = card.querySelector('.edit-name');
+    nameInput.focus();
+    nameInput.select();
+
+    card.querySelector('.save-btn').addEventListener('click', async () => {
+        const newName = nameInput.value.trim();
+        const newStart = card.querySelector('.edit-start').value;
+        const newEnd = card.querySelector('.edit-end').value;
+        if (newName) await updateScheduleActivity(id, newName, newStart, newEnd);
+    });
+
+    card.querySelector('.cancel-btn').addEventListener('click', () => {
+        renderSchedule();
+    });
+
 
     // Build time summary
     const summaryContainer = document.getElementById('schedule-summary');
