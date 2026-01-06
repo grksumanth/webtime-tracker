@@ -1137,6 +1137,21 @@ async function fetchStockData(symbol) {
     }
 }
 
+// Get currency symbol based on stock suffix
+function getCurrencySymbol(symbol) {
+    if (symbol.endsWith('.NS') || symbol.endsWith('.BO')) return '₹';  // India
+    if (symbol.endsWith('.L')) return '£';   // UK
+    if (symbol.endsWith('.DE') || symbol.endsWith('.F') || symbol.endsWith('.PA')) return '€';  // Europe
+    if (symbol.endsWith('.T') || symbol.endsWith('.SS') || symbol.endsWith('.SZ')) return '¥';  // Japan/China
+    if (symbol.endsWith('.HK')) return 'HK$'; // Hong Kong
+    if (symbol.endsWith('.TO')) return 'C$';  // Canada
+    if (symbol.endsWith('.AX')) return 'A$';  // Australia
+    if (symbol.endsWith('.SI')) return 'S$';  // Singapore
+    if (symbol.endsWith('.KS')) return '₩';   // South Korea
+    if (symbol.endsWith('.SA')) return 'R$';  // Brazil
+    return '$'; // US default
+}
+
 async function renderStocks() {
     const list = document.getElementById('stock-list');
     if (!list) return;
@@ -1173,8 +1188,7 @@ async function renderStocks() {
         const colorClass = isUp ? 'stock-up' : 'stock-down';
         const sign = isUp ? '+' : '';
         // Determine currency based on suffix
-        const isIndian = sym.endsWith('.NS') || sym.endsWith('.BO');
-        const currency = isIndian ? '₹' : '$';
+        const currency = getCurrencySymbol(sym);
 
         const el = document.createElement('div');
         el.className = 'stock-item';
@@ -1299,8 +1313,7 @@ async function renderPortfolio() {
 
     list.innerHTML = '';
     let totalValue = 0;
-    let indianCount = 0;
-    let usCount = 0;
+    const currencyCounts = {}; // Track count of each currency
 
     // Render holdings
     for (let i = 0; i < holdings.length; i++) {
@@ -1311,9 +1324,8 @@ async function renderPortfolio() {
         totalValue += value;
 
         // Determine currency based on suffix
-        const isIndian = holding.symbol.endsWith('.NS') || holding.symbol.endsWith('.BO');
-        const currency = isIndian ? '₹' : '$';
-        if (isIndian) indianCount++; else usCount++;
+        const currency = getCurrencySymbol(holding.symbol);
+        currencyCounts[currency] = (currencyCounts[currency] || 0) + 1;
 
         const el = document.createElement('div');
         el.className = 'portfolio-item';
@@ -1379,8 +1391,9 @@ async function renderPortfolio() {
         list.innerHTML = '<div style="text-align:center; color:#666; font-size:11px; padding:10px;">No holdings. Add stocks or cash above.</div>';
     }
 
-    // Update total with dominant currency
-    const totalCurrency = (indianCount > 0 && usCount === 0) ? '₹' : '$';
+    // Update total with dominant currency (if all holdings share one currency, use it)
+    const currencies = Object.keys(currencyCounts);
+    const totalCurrency = (currencies.length === 1) ? currencies[0] : '$';
     totalEl.textContent = `${totalCurrency}${totalValue.toFixed(2)}`;
 }
 
