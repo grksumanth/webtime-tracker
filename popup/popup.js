@@ -1299,6 +1299,8 @@ async function renderPortfolio() {
 
     list.innerHTML = '';
     let totalValue = 0;
+    let indianCount = 0;
+    let usCount = 0;
 
     // Render holdings
     for (let i = 0; i < holdings.length; i++) {
@@ -1311,6 +1313,7 @@ async function renderPortfolio() {
         // Determine currency based on suffix
         const isIndian = holding.symbol.endsWith('.NS') || holding.symbol.endsWith('.BO');
         const currency = isIndian ? '₹' : '$';
+        if (isIndian) indianCount++; else usCount++;
 
         const el = document.createElement('div');
         el.className = 'portfolio-item';
@@ -1376,8 +1379,9 @@ async function renderPortfolio() {
         list.innerHTML = '<div style="text-align:center; color:#666; font-size:11px; padding:10px;">No holdings. Add stocks or cash above.</div>';
     }
 
-    // Update total
-    totalEl.textContent = `$${totalValue.toFixed(2)}`;
+    // Update total with dominant currency
+    const totalCurrency = (indianCount > 0 && usCount === 0) ? '₹' : '$';
+    totalEl.textContent = `${totalCurrency}${totalValue.toFixed(2)}`;
 }
 
 // ---------------------------------------------------------
@@ -1589,15 +1593,18 @@ async function renderSchedule() {
             const totalMinutes = Math.round(item.hours * 60);
             const hours = Math.floor(totalMinutes / 60);
             const mins = totalMinutes % 60;
-            let timeStr = '';
-            if (hours > 0) timeStr += `${hours}h `;
-            if (mins > 0 || hours === 0) timeStr += `${mins}m`;
 
-            return `<span class="summary-item">
-                <span class="summary-dot" style="background:${item.color};"></span>
-                <span>${item.name}:</span>
-                <span style="opacity:0.8">${timeStr.trim()}</span>
-            </span>`;
+            // Build time string - always include at least one value
+            let timeStr;
+            if (hours > 0 && mins > 0) {
+                timeStr = `${hours}h ${mins}m`;
+            } else if (hours > 0) {
+                timeStr = `${hours}h`;
+            } else {
+                timeStr = `${mins}m`;
+            }
+
+            return `<span class="summary-item"><span class="summary-dot" style="background:${item.color};"></span><span>${item.name}: ${timeStr}</span></span>`;
         }).join('');
 
         summaryContainer.innerHTML = summaryHtml || '<span class="summary-empty">No activities</span>';
