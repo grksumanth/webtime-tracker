@@ -415,10 +415,29 @@ hr.divider {
     gap: 10px;
 }
 
+.favicon-wrapper {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    position: relative;
+}
+
 .favicon {
     width: 16px;
     height: 16px;
     border-radius: 3px;
+}
+
+.favicon-fallback {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: #fff;
 }
 
 .domain-info {

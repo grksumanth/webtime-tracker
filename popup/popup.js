@@ -559,9 +559,13 @@ function renderChart(statsMap) {
         li.className = 'stat-item';
 
         const faviconUrl = `https://www.google.com/s2/favicons?domain=${item.domain}&sz=32`;
+        const firstLetter = item.domain.charAt(0).toUpperCase();
 
         li.innerHTML = `
-            <img src="${faviconUrl}" class="favicon" alt="" onerror="this.style.display='none'">
+            <div class="favicon-wrapper">
+                <img src="${faviconUrl}" class="favicon" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="favicon-fallback" style="display:none; background-color:${color};">${firstLetter}</div>
+            </div>
             <div class="domain-info">
                 <div style="display:flex; justify-content:space-between;">
                     <span class="domain-name">${item.domain}</span>
@@ -1379,9 +1383,20 @@ async function initPortfolio() {
 
     // Lock/unlock toggle for privacy
     const lockBtn = document.getElementById('btn-portfolio-lock');
+
+    // Load initial lock state
+    const lockData = await browser.storage.local.get('portfolio_locked');
+    portfolioLocked = lockData.portfolio_locked || false;
+
+    // Update button UI based on loaded state
     if (lockBtn) {
-        lockBtn.addEventListener('click', () => {
+        lockBtn.textContent = portfolioLocked ? '🔒' : '🔓';
+        lockBtn.title = portfolioLocked ? 'Show values' : 'Hide values';
+
+        lockBtn.addEventListener('click', async () => {
             portfolioLocked = !portfolioLocked;
+            await browser.storage.local.set({ portfolio_locked: portfolioLocked });
+
             lockBtn.textContent = portfolioLocked ? '🔒' : '🔓';
             lockBtn.title = portfolioLocked ? 'Show values' : 'Hide values';
             renderPortfolio();
