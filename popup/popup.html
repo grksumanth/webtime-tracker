@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TabTime</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="blinkeyes.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
@@ -43,11 +44,15 @@
             <label class="checkbox-row">
                 <input type="checkbox" data-tab="hydrate" checked> Hydrate
             </label>
+            <label class="checkbox-row">
+                <input type="checkbox" data-tab="eyeblink" checked> Blink Eyes
+            </label>
         </div>
 
         <nav class="tab-nav">
             <button class="tab-btn active" data-tab="tracker">Tracker</button>
             <button class="tab-btn" data-tab="hydrate">Water</button>
+            <button class="tab-btn" data-tab="eyeblink">Blink</button>
             <button class="tab-btn" data-tab="schedule">Schedule</button>
             <button class="tab-btn" data-tab="notes">Notes</button>
             <button class="tab-btn" data-tab="calendar">Calendar</button>
@@ -309,10 +314,52 @@
             </div>
         </div>
 
+        <!-- EYEBLINK TAB -->
+        <div id="tab-eyeblink" class="tab-content" style="display:none;">
+            <div class="eyeblink-container">
+                <!-- Eye Visual -->
+                <div class="eye-visual-row">
+                    <div class="eye-visual">
+                        <div class="eyeball">
+                            <div class="iris">
+                                <div class="pupil"></div>
+                            </div>
+                            <div class="eyelid eyelid-top"></div>
+                            <div class="eyelid eyelid-bottom"></div>
+                        </div>
+                    </div>
+                    <div class="eyeblink-countdown-display" id="eyeblink-next-reminder" style="display: none;">
+                        <span class="countdown-label">Next reminder</span>
+                        <span class="countdown-time" id="eyeblink-time-left">--:--</span>
+                    </div>
+                </div>
+
+                <div class="eyeblink-message" id="eyeblink-message">Rest Your Eyes! 👁️</div>
+
+                <!-- Settings -->
+                <div class="eyeblink-settings">
+                    <div class="eyeblink-row">
+                        <label>Remind every</label>
+                        <div class="slider-container">
+                            <input type="range" id="eyeblink-interval" min="1" max="60" value="20" step="1" />
+                            <span id="eyeblink-interval-value">20 min</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="eyeblink-buttons">
+                    <button id="btn-eyeblink-toggle" class="eyeblink-btn">Start Reminders</button>
+                    <button id="btn-eyeblink-test" class="eyeblink-test-btn" title="Test notification">🔔 Test</button>
+                </div>
+            </div>
+        </div>
+
         <footer>
             <!-- <button id="settings-btn">Settings</button> -->
         </footer>
     </div>
+    <script src="../lib/browser-polyfill.js"></script>
+    <script src="blinkeyes.js"></script>
     <script src="popup.js"></script>
 </body>
 

@@ -15,6 +15,8 @@
  * @version 1.0.0
  */
 
+
+
 const formatTime = (seconds) => {
     const s = Math.floor(seconds % 60);
     const m = Math.floor((seconds % 3600) / 60);
@@ -327,6 +329,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize Hydrate
     initHydrate();
+
+    // Initialize EyeBlink
+    initEyeBlink();
 
     // NOW restore last active tab (after all content is initialized)
     // Only restore if opened within 1 minute (60000ms), otherwise default to tracker

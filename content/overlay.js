@@ -1,7 +1,6 @@
 let overlay = null;
 let timerInterval = null;
 let currentTimerId = null;
-
 // Get the soonest ending running timer
 function getSoonestTimer(timers) {
     if (!timers || timers.length === 0) return null;
@@ -146,4 +145,77 @@ function startTicker(endTime) {
 
     tick();
     timerInterval = setInterval(tick, 1000);
+}
+
+// =============================================
+// BLINK EYES OVERLAY
+// =============================================
+
+let eyeBlinkOverlay = null;
+
+// Listen for messages from background script
+browser.runtime.onMessage.addListener((message) => {
+    if (message.type === 'showEyeBlinkOverlay') {
+        showEyeBlinkOverlay();
+    }
+});
+
+function showEyeBlinkOverlay() {
+    // Remove existing overlay if any
+    if (eyeBlinkOverlay) {
+        eyeBlinkOverlay.remove();
+        eyeBlinkOverlay = null;
+    }
+
+    // Create overlay container
+    eyeBlinkOverlay = document.createElement('div');
+    eyeBlinkOverlay.id = 'webtime-eyeblink-overlay';
+    eyeBlinkOverlay.innerHTML = `
+        <div class="eyeblink-overlay-content">
+            <div class="eyeblink-overlay-icon">👁️👁️</div>
+            <div class="eyeblink-overlay-title">Time for an Eye Break!</div>
+            <div class="eyeblink-overlay-message">Look away from the screen for 20 seconds.<br>Focus on something 20 feet away.</div>
+            <div class="eyeblink-overlay-countdown" id="eyeblink-countdown">5</div>
+        </div>
+    `;
+
+    document.body.appendChild(eyeBlinkOverlay);
+
+    // Animate in
+    setTimeout(() => {
+        eyeBlinkOverlay.classList.add('show');
+    }, 10);
+
+    // Countdown timer
+    let countdown = 5;
+    const countdownEl = eyeBlinkOverlay.querySelector('#eyeblink-countdown');
+    const countdownInterval = setInterval(() => {
+        countdown--;
+        if (countdownEl) countdownEl.textContent = countdown;
+        if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            // Auto-dismiss
+            if (eyeBlinkOverlay) {
+                eyeBlinkOverlay.classList.remove('show');
+                setTimeout(() => {
+                    if (eyeBlinkOverlay) {
+                        eyeBlinkOverlay.remove();
+                        eyeBlinkOverlay = null;
+                    }
+                }, 500);
+            }
+        }
+    }, 1000);
+
+    // Allow click to dismiss early
+    eyeBlinkOverlay.addEventListener('click', () => {
+        clearInterval(countdownInterval);
+        eyeBlinkOverlay.classList.remove('show');
+        setTimeout(() => {
+            if (eyeBlinkOverlay) {
+                eyeBlinkOverlay.remove();
+                eyeBlinkOverlay = null;
+            }
+        }, 500);
+    });
 }
