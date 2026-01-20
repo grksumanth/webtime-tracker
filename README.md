@@ -12,6 +12,10 @@ A Firefox extension for tracking time spent on websites, managing timers, taking
 |----------|-----------|-----------|
 | ![Calendar](screenshots/calendar.png) | ![Watchlist](screenshots/watchlist.png) | ![Portfolio](screenshots/portfolio.png) |
 
+| Blink Eyes Tab | Blink Eyes Overlay |
+|----------------|--------------------|
+| ![Blink](screenshots/blink.png) | ![Overlay](screenshots/blink-overlay.png) |
+
 ## Features
 
 ### 🕐 Time Tracking
