@@ -38,3 +38,132 @@
         transform: scale(1);
     }
 }
+
+/* =============================================
+   BLINK EYES OVERLAY
+   ============================================= */
+
+#webtime-eyeblink-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2147483647;
+    background: rgba(30, 30, 46, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+}
+
+#webtime-eyeblink-overlay.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.eyeblink-overlay-content {
+    text-align: center;
+    color: #cdd6f4;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    animation: fadeInUp 0.6s ease-out;
+    max-width: 90%;
+    width: 600px;
+    padding: 20px;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.eyeblink-overlay-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    animation: blink 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    40%,
+    60%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.2;
+    }
+}
+
+.eyeblink-overlay-title {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    padding: 0 10px 5px 10px;
+    /* Prevent clipping of gradient text features */
+    background: linear-gradient(135deg, #a6e3a1 0%, #89b4fa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.4;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.eyeblink-overlay-message {
+    font-size: 18px;
+    color: #a6adc8;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.eyeblink-overlay-countdown {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, #a6e3a1 0%, #89b4fa 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e1e2e;
+    animation: countdownPulse 1s ease-in-out infinite;
+}
+
+@keyframes countdownPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+#webtime-eyeblink-overlay::after {
+    content: 'Click anywhere to dismiss';
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: #6c7086;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}

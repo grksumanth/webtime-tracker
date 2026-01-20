@@ -1,0 +1,417 @@
+/**
+ * Blink Eyes Tab Styles
+ * Styles for eye strain reminder feature
+ */
+
+/* =============================================
+   EYEBLINK TAB
+   ============================================= */
+
+.eyeblink-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px;
+    gap: 10px;
+}
+
+/* Eye Visual */
+.eye-visual-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.eye-visual {
+    width: 90px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.eyeblink-countdown-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--surface0);
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(166, 227, 161, 0.3);
+}
+
+.eyeblink-countdown-display .countdown-label {
+    font-size: 10px;
+    color: var(--subtext-color);
+    margin-bottom: 2px;
+}
+
+.eyeblink-countdown-display .countdown-time {
+    font-size: 20px;
+    font-weight: 700;
+    color: #a6e3a1;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Urgent pulse animation for eye when time is almost up */
+.eye-visual.urgent-pulse {
+    animation: urgentPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes urgentPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.eyeball {
+    width: 70px;
+    height: 50px;
+    background: linear-gradient(135deg, #ffffff 0%, #f0f0f5 100%);
+    border-radius: 50%;
+    position: relative;
+    box-shadow:
+        inset 0 0 15px rgba(0, 0, 0, 0.1),
+        0 4px 20px rgba(166, 227, 161, 0.3);
+    overflow: hidden;
+}
+
+.iris {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #74c7ec 0%, #89b4fa 50%, #cba6f7 100%);
+    border-radius: 50%;
+    animation: irisLook 4s ease-in-out infinite;
+}
+
+@keyframes irisLook {
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%);
+    }
+
+    25% {
+        transform: translate(-40%, -55%);
+    }
+
+    50% {
+        transform: translate(-60%, -50%);
+    }
+
+    75% {
+        transform: translate(-50%, -45%);
+    }
+}
+
+.pupil {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background: #1e1e2e;
+    border-radius: 50%;
+    box-shadow: inset 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+.pupil::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 4px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+}
+
+/* Eyelids */
+.eyelid {
+    position: absolute;
+    left: -5px;
+    right: -5px;
+    height: 30px;
+    background: linear-gradient(180deg, #89b4fa 0%, #a6e3a1 100%);
+    transition: height 0.15s ease-in-out;
+}
+
+.eyelid-top {
+    top: -25px;
+    border-radius: 0 0 50% 50%;
+    animation: blinkAnimation 3s ease-in-out infinite;
+}
+
+.eyelid-bottom {
+    bottom: -25px;
+    border-radius: 50% 50% 0 0;
+    animation: blinkAnimationBottom 3s ease-in-out infinite;
+}
+
+@keyframes blinkAnimation {
+
+    0%,
+    45%,
+    55%,
+    100% {
+        height: 30px;
+    }
+
+    48%,
+    52% {
+        height: 55px;
+    }
+}
+
+@keyframes blinkAnimationBottom {
+
+    0%,
+    45%,
+    55%,
+    100% {
+        height: 30px;
+    }
+
+    48%,
+    52% {
+        height: 27px;
+    }
+}
+
+/* Message */
+.eyeblink-message {
+    font-size: 13px;
+    font-weight: 600;
+    color: #a6e3a1;
+    text-align: center;
+}
+
+/* Settings */
+.eyeblink-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 300px;
+}
+
+.eyeblink-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+}
+
+.eyeblink-row label {
+    font-size: 12px;
+    color: var(--subtext-color);
+    min-width: 80px;
+}
+
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.slider-container input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 120px;
+    height: 6px;
+    background: var(--surface1);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+.slider-container input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #a6e3a1 0%, #89b4fa 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(166, 227, 161, 0.4);
+    transition: transform 0.2s ease;
+}
+
+.slider-container input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.slider-container input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #a6e3a1 0%, #89b4fa 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 8px rgba(166, 227, 161, 0.4);
+}
+
+#eyeblink-interval-value {
+    font-size: 12px;
+    font-weight: 600;
+    color: #a6e3a1;
+    min-width: 50px;
+}
+
+/* Start/Stop Button */
+.eyeblink-btn {
+    padding: 8px 24px;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #a6e3a1 0%, #89b4fa 100%);
+    color: #1e1e2e;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(166, 227, 161, 0.3);
+}
+
+.eyeblink-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(166, 227, 161, 0.4);
+}
+
+.eyeblink-btn.active {
+    background: linear-gradient(135deg, #f38ba8 0%, #fab387 100%);
+}
+
+.eyeblink-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.eyeblink-test-btn {
+    padding: 8px 12px;
+    font-size: 11px;
+    border: none;
+    border-radius: 15px;
+    background: var(--surface1);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.eyeblink-test-btn:hover {
+    background: #a6e3a1;
+    color: var(--bg-color);
+}
+
+/* Stats */
+.eyeblink-stats {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: var(--surface0);
+    border-radius: 10px;
+}
+
+.eyeblink-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.eyeblink-stat-item .stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #a6e3a1;
+}
+
+.eyeblink-stat-item .stat-label {
+    font-size: 11px;
+    color: var(--subtext-color);
+}
+
+.break-btn {
+    padding: 8px 16px;
+    font-size: 16px;
+    border: none;
+    border-radius: 20px;
+    background: var(--surface1);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.break-btn:hover {
+    background: #a6e3a1;
+    color: var(--bg-color);
+}
+
+/* Blink Eyes Toast Notification */
+.eyeblink-toast {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #a6e3a1 0%, #89b4fa 100%);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 32px rgba(166, 227, 161, 0.4);
+    z-index: 1000;
+    transform: translateY(-120%);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.eyeblink-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.eyeblink-toast .toast-icon {
+    font-size: 24px;
+    animation: toastBlink 1s ease-in-out infinite;
+}
+
+@keyframes toastBlink {
+
+    0%,
+    90%,
+    100% {
+        opacity: 1;
+    }
+
+    95% {
+        opacity: 0.3;
+    }
+}
+
+.eyeblink-toast .toast-content {
+    flex: 1;
+}
+
+.eyeblink-toast .toast-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e1e2e;
+    margin-bottom: 2px;
+}
+
+.eyeblink-toast .toast-message {
+    font-size: 11px;
+    color: rgba(30, 30, 46, 0.8);
+}

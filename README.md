@@ -26,6 +26,15 @@ A Firefox extension for tracking time spent on websites, managing timers, taking
 - Desktop notifications when timer completes
 - Multiple simultaneous timers supported
 
+### 👁️ Blink Eye Reminder
+- Reminds you to rest your eyes and reduce eye strain
+- Configurable intervals from 1 to 60 minutes (default: 20 minutes)
+- Based on the 20-20-20 rule: every 20 minutes, look at something 20 feet away for 20 seconds
+- Visual countdown timer showing time until next reminder
+- Progressive urgency indicator - the eye turns red as the reminder approaches
+- Beautiful full-screen overlay notification that auto-dismisses
+- Works on any webpage without requiring notification permissions
+
 ### 📅 Schedule
 - Plan your day with time-blocked activities
 - Smart color coding for similar activities
@@ -93,20 +102,38 @@ This extension:
 ### Project Structure
 ```
 webtime-tracker/
-├── manifest.json       # Extension manifest
+├── manifest.json        # Extension manifest
 ├── background/
-│   └── background.js   # Background script for tracking
+│   └── background.js    # Background script for tracking & alarms
 ├── popup/
-│   ├── popup.html      # Main UI
-│   ├── popup.js        # UI logic
-│   └── style.css       # Styling
+│   ├── popup.html       # Main UI
+│   ├── popup.js         # UI logic
+│   ├── style.css        # Main styling
+│   ├── blinkeyes.js     # Blink eyes reminder logic
+│   └── blinkeyes.css    # Blink eyes tab styling
 ├── content/
-│   └── overlay.js      # Content script
-└── icons/              # Extension icons
+│   ├── overlay.js       # Content script for timer & blink eyes overlays
+│   └── overlay.css      # Overlay styling
+└── icons/               # Extension icons
 ```
 
-### Building
-No build step required - this is a vanilla JS extension.
+### Building & Release
+
+To package the extension for both Chrome and Firefox:
+
+1. Run the build script:
+   ```bash
+   ./build.sh
+   ```
+
+2. This creates a `dist` folder containing:
+   - `chrome-extension.zip` - Ready for Chrome Web Store
+   - `firefox-extension.zip` - Ready for Firefox Add-ons
+   - `chrome/` and `firefox/` - Unpacked folders for testing
+
+The project uses separate manifest files for cross-browser compatibility:
+- `manifest-chrome.json` (Service Worker)
+- `manifest-firefox.json` (Background Scripts)
 
 ## License
 

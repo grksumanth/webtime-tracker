@@ -3,6 +3,11 @@
  * Handles time tracking, tab switching, and data storage.
  */
 
+// Browser API compatibility shim (Chrome uses 'chrome', Firefox uses 'browser')
+if (typeof browser === 'undefined') {
+  globalThis.browser = chrome;
+}
+
 // State
 let currentDomain = null;
 let startTime = Date.now();
@@ -505,12 +510,33 @@ browser.alarms.onAlarm.addListener(async (alarm) => {
 
     // Only notify if within time window
     if (currentTime >= startMinutes && currentTime <= endMinutes) {
-      browser.notifications.create('hydrateNotification', {
+      const notificationId = 'hydrateNotification_' + Date.now();
+      browser.notifications.create(notificationId, {
         type: 'basic',
         iconUrl: 'icons/icon-48.png',
         title: '💧 Time to Hydrate!',
         message: 'Take a moment to drink some water. Stay healthy!'
       });
+
+      // Auto-dismiss after 5 seconds
+      setTimeout(() => {
+        browser.notifications.clear(notificationId).catch(() => { });
+      }, 5000);
+    }
+  } else if (alarm.name === 'eyeblinkReminder') {
+    // Handle blink eyes reminder
+    const data = await browser.storage.local.get('eyeblink_active');
+
+    if (!data.eyeblink_active) return;
+
+    // Send message to active tab to show overlay
+    try {
+      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+      if (tabs.length > 0 && tabs[0].id) {
+        browser.tabs.sendMessage(tabs[0].id, { type: 'showEyeBlinkOverlay' }).catch(() => { });
+      }
+    } catch (e) {
+      console.log('Could not send blink eyes overlay message:', e);
     }
   }
 });
@@ -519,17 +545,51 @@ browser.alarms.onAlarm.addListener(async (alarm) => {
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'testHydrateNotification') {
     const iconUrl = browser.runtime.getURL('icons/icon-48.png');
-    browser.notifications.create('hydrateTest_' + Date.now(), {
+    const notificationId = 'hydrateTest_' + Date.now();
+    browser.notifications.create(notificationId, {
       type: 'basic',
       iconUrl: iconUrl,
       title: '💧 Time to Hydrate!',
       message: 'Take a moment to drink some water. Stay healthy!'
-    }).then((notificationId) => {
-      console.log('Notification created:', notificationId);
-      sendResponse({ success: true, id: notificationId });
+    }).then((id) => {
+      console.log('Notification created:', id);
+      try {
+        sendResponse({ success: true, id: id });
+      } catch (e) {
+        // Popup may have closed
+      }
+
+      // Auto-dismiss after 5 seconds
+      setTimeout(() => {
+        browser.notifications.clear(notificationId).catch(() => { });
+      }, 5000);
     }).catch((err) => {
       console.error('Notification error:', err);
-      sendResponse({ success: false, error: String(err) });
+      try {
+        sendResponse({ success: false, error: String(err) });
+      } catch (e) {
+        // Popup may have closed
+      }
+    });
+    return true; // Keep message channel open for async response
+  } else if (message.type === 'testEyeBlinkNotification') {
+    // Send message to active tab to show overlay
+    browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+      if (tabs.length > 0 && tabs[0].id) {
+        browser.tabs.sendMessage(tabs[0].id, { type: 'showEyeBlinkOverlay' }).catch(() => { });
+      }
+      try {
+        sendResponse({ success: true });
+      } catch (e) {
+        // Popup may have closed
+      }
+    }).catch((err) => {
+      console.error('Blink eyes overlay error:', err);
+      try {
+        sendResponse({ success: false, error: String(err) });
+      } catch (e) {
+        // Popup may have closed
+      }
     });
     return true; // Keep message channel open for async response
   }
